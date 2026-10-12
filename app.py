@@ -32,11 +32,23 @@ nomes = [c.strip().lower() for c in str(CFG["tema"]).split(" e ")]
 COR1 = CORES[nomes[0]]
 COR2 = CORES[nomes[1]] if len(nomes) > 1 else COR1
 
-CHAVES = {"openrouter": "OPENROUTER_API_KEY",
+CHAVES = {"gemini": "GEMINI_API_KEY",
+          "openrouter": "OPENROUTER_API_KEY",
           "anthropic": "ANTHROPIC_API_KEY",
           "openai": "OPENAI_API_KEY"}
 
 # ---------- provedores ----------
+def via_gemini(modelo, msgs):
+    from openai import OpenAI
+    c = OpenAI(base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+               api_key=os.environ[CHAVES["gemini"]])
+    fluxo = c.chat.completions.create(
+        model=modelo, messages=msgs, max_tokens=MAX_TOKENS, stream=True,
+        reasoning_effort="none")  # evita que o "pensar" gaste o max_tokens (modelos Flash)
+    for ev in fluxo:
+        if ev.choices and ev.choices[0].delta.content:
+            yield ev.choices[0].delta.content
+
 def via_openrouter(modelo, msgs):
     from openai import OpenAI
     c = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=os.environ[CHAVES["openrouter"]])
@@ -65,7 +77,7 @@ def via_openai(modelo, msgs):
         if ev.choices and ev.choices[0].delta.content:
             yield ev.choices[0].delta.content
 
-FUNCOES = {"openrouter": via_openrouter, "anthropic": via_anthropic, "openai": via_openai}
+FUNCOES = {"gemini": via_gemini, "openrouter": via_openrouter, "anthropic": via_anthropic, "openai": via_openai}
 
 # ---------- chat ----------
 def responder(mensagem, historico):
@@ -79,7 +91,7 @@ def responder(mensagem, historico):
     if not ativos:
         yield ("⚠️ Nenhuma chave de API configurada. No Hugging Face, abra o Space → "
                "Settings → Variables and secrets → New secret e cadastre "
-               "OPENROUTER_API_KEY, ANTHROPIC_API_KEY ou OPENAI_API_KEY. "
+               "GEMINI_API_KEY, OPENROUTER_API_KEY, ANTHROPIC_API_KEY ou OPENAI_API_KEY. "
                "Depois reinicie o Space.")
         return
 

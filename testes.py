@@ -3,7 +3,7 @@ import os, re, sys, py_compile
 import yaml
 
 CORES = ["azul", "verde", "vermelho", "laranja", "roxo", "grafite"]
-PROVEDORES = ["openrouter", "anthropic", "openai"]
+PROVEDORES = ["gemini", "openrouter", "anthropic", "openai"]
 erros = []
 
 def erro(msg):
@@ -37,7 +37,7 @@ if len(str(cfg.get("prompt_sistema") or "").strip()) < 80:
 # T4b
 prov = cfg.get("provedores")
 if not isinstance(prov, dict) or not prov:
-    erro("T4b: 'provedores' precisa ter ao menos um item (openrouter, anthropic ou openai).")
+    erro("T4b: 'provedores' precisa ter ao menos um item (gemini, openrouter, anthropic ou openai).")
 else:
     for p, m in prov.items():
         if p not in PROVEDORES:
@@ -63,7 +63,7 @@ except Exception as e:
     erro(f"T6: app.py tem erro de sintaxe: {e}")
 
 # T7
-padrao = re.compile(r"(sk-or-[A-Za-z0-9\-]{10,}|sk-ant-[A-Za-z0-9\-_]{10,}|sk-proj-[A-Za-z0-9\-_]{10,}|hf_[A-Za-z0-9]{20,})")
+padrao = re.compile(r"(sk-or-[A-Za-z0-9\-]{10,}|sk-ant-[A-Za-z0-9\-_]{10,}|sk-proj-[A-Za-z0-9\-_]{10,}|hf_[A-Za-z0-9]{20,}|AIza[A-Za-z0-9\-_]{30,})")
 for raiz, dirs, arquivos in os.walk("."):
     dirs[:] = [d for d in dirs if d not in (".git", "__pycache__")]
     for nome in arquivos:
