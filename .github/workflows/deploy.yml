@@ -1,0 +1,40 @@
+name: Testar e publicar
+
+env:
+  HF_USUARIO: itaquigabriel      # EDITE: seu usuário no Hugging Face
+  HF_SPACE: NOME-EXATO-DO-SPACE   # EDITE: nome EXATO do Space, como está na URL
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Instalar pyyaml
+        run: pip install pyyaml
+      - name: Rodar o portão
+        run: python testes.py
+
+  publicar:
+    needs: testar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositório com histórico completo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Enviar ao Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          REPO="huggingface.co/spaces/${HF_USUARIO}/${HF_SPACE}"
+          git push --force "https://${HF_USUARIO}:${HF_TOKEN}@${REPO}" HEAD:main
