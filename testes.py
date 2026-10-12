@@ -45,6 +45,14 @@ else:
         if not str(m or "").strip():
             erro(f"T4b: o provedor '{p}' está sem modelo.")
 
+# T4c: modo gratuito não deixa passar provedor pago
+if cfg.get("modo_gratuito") and isinstance(prov, dict):
+    for p, m in prov.items():
+        if p in ("anthropic", "openai"):
+            erro(f"T4c: modo_gratuito está ligado, mas '{p}' é pago. Apague essa linha de provedores.")
+        if p == "openrouter" and not str(m).endswith(":free"):
+            erro(f"T4c: modo_gratuito exige modelo do OpenRouter terminado em ':free' (achei '{m}').")
+
 # T5
 logo = str(cfg.get("logo") or "").strip()
 if logo and not logo.startswith("https://"):
