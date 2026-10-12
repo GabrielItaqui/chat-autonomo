@@ -24,6 +24,7 @@ PROMPT = CFG["prompt_sistema"]
 MAX_TOKENS = int(CFG.get("max_tokens", 800))
 PROVEDORES = CFG["provedores"]
 EXEMPLOS = CFG.get("exemplos") or []
+MODO_GRATUITO = bool(CFG.get("modo_gratuito", False))
 ALTURA = int(CFG.get("logo_altura", 56))
 
 CORES = {"azul": "#1F4E9C", "verde": "#1E7B4F", "vermelho": "#B3261E",
@@ -87,7 +88,13 @@ def responder(mensagem, historico):
             msgs.append({"role": m["role"], "content": m["content"]})
     msgs.append({"role": "user", "content": mensagem})
 
-    ativos = [(p, m) for p, m in PROVEDORES.items() if os.environ.get(CHAVES.get(p, ""))]
+    def permitido(p, m):
+        if not MODO_GRATUITO:
+            return True
+        return p == "gemini" or (p == "openrouter" and m.endswith(":free"))
+
+    ativos = [(p, m) for p, m in PROVEDORES.items()
+              if os.environ.get(CHAVES.get(p, "")) and permitido(p, m)]
     if not ativos:
         yield ("⚠️ Nenhuma chave de API configurada. No Hugging Face, abra o Space → "
                "Settings → Variables and secrets → New secret e cadastre "
@@ -96,6 +103,7 @@ def responder(mensagem, historico):
         return
 
     erros = []
+    limite = False
     for p, modelo in ativos:
         texto = ""
         try:
@@ -109,7 +117,13 @@ def responder(mensagem, historico):
             if texto:
                 yield texto + f"\n\n⚠️ A resposta foi interrompida ({p}): {e}"
                 return
+            if any(s in str(e) for s in ("429", "RESOURCE_EXHAUSTED", "quota", "rate limit")):
+                limite = True
             erros.append(f"**{p}** ({modelo}): {e}")
+    if limite:
+        yield ("⏸️ **O limite gratuito foi atingido.** O assistente está pausado para não gerar "
+               "custos. Tente novamente mais tarde (a cota gratuita costuma renovar em até 24 horas).")
+        return
     yield "😕 Não consegui responder agora. Motivo de cada tentativa:\n\n" + "\n\n".join(f"- {e}" for e in erros)
 
 # ---------- visual ----------
