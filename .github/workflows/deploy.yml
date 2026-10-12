@@ -2,7 +2,7 @@ name: Testar e publicar
 
 env:
   HF_USUARIO: itaquigabriel      # EDITE: seu usuário no Hugging Face
-  HF_SPACE: NOME-EXATO-DO-SPACE   # EDITE: nome EXATO do Space, como está na URL
+  HF_SPACE: chat-autonomo   # EDITE: nome EXATO do Space, como está na URL
 
 on:
   push:
